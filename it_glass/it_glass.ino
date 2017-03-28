@@ -6,8 +6,16 @@
 #include "Wire.h"
 #endif
  
-//-------------------------------------HC-06
-SoftwareSerial SoftSerial(2, 3);  //TX=2, RX=3
+//-------------------------------------HC-06 bluetooth setting.
+int blueTx = 0; // tx=0
+int blueRx = 1; // rx=1
+SoftwareSerial btSerial(blueTx, blueRx);  // btSerial. use to bluetooth communication
+String fromUser=""; // message fromg user
+
+//------------------------------------RGB led pin number
+int redPin = 4;
+int greenPin = 3;
+int bluePin = 5;
  
 #define XMT   Serial
 //#define XMT   softSerial
@@ -45,8 +53,15 @@ byte keepSendCnt;
   ---------------------------------------------------------*/
 void setup() {
   Serial.begin(9600);
-  SoftSerial.begin(9600);
- 
+
+  // bluetooth serial begin
+  btSerial.begin(9600);
+
+  // led pin setting
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  
   MPU6050Timer = 0; //long
   detectionTimer = 0; //long
   MPU6050ThresholdCap = 0; //byte
@@ -69,6 +84,7 @@ void setup() {
       L  O  O  P
   ---------------------------------------------------------*/
 void loop() {
+  getMessageAndAct();
   getAccel();
   getMotion();
 }
@@ -83,29 +99,25 @@ void getMotion(void){
  
   if(MPU6050ThresholdCap){    // 6050 event ߻ .
     sendMotion();
-    XMT.println("컵이 움직인다.");
     keepSendCnt = KEEP_SEND_TIMES;
     MPU6050ThresholdCap = 0;
   }
   else{
     if(noMotionCnt) noMotionCnt--;
     if(!noMotionCnt && keepSendCnt){
-      sendMotion();
-      XMT.println("컵이 안 움직인다.");
       keepSendCnt--;
-      noMotionCnt = MOTION_DETECTION_HZ;  //motion  1 ʿ 1ȸ Ѵ .
+      noMotionCnt = MOTION_DETECTION_HZ;  //motion
     }  
   }
 }  
  
  
 void sendMotion(void){
-  XMT.print(event_gx);
-  XMT.write(',');
-  XMT.print(event_gy);
-  XMT.write(',');
-  XMT.print(event_gz);
-  XMT.println(",");
+    XMT.println("컵이 움직인다.");
+      if(XMT.available()){
+      btSerial.write(XMT.read());
+      btSerial.flush();
+    }
 }
  
 //-----------------------------------------------
@@ -167,3 +179,45 @@ int tab4(byte i){
   t /= 4;
   return (int)t;
 }
+
+// RGB 값을 받아 analogWrite를 통해 각 핀에 연결된 LED에 전달
+void setColor(int red, int green, int blue)
+{
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue); 
+}
+
+void getMessageAndAct(){
+
+  // 들어온 메시지가 있으면 받는다.
+  while(btSerial.available())
+  {
+    char myGetChar = (char)btSerial.read();
+    fromUser+=myGetChar;
+    delay(5);
+  } 
+
+  // 메시지에 따른 액션 
+  if(!fromUser.equals("")){
+  if(fromUser.equals("red"))
+  {
+    setColor(255, 0, 0);  // red
+    delay(2000);
+  }
+  if(fromUser.equals("blue"))
+  {   
+    setColor(0, 0, 255);  // blue
+    delay(2000);
+    }
+    fromUser="";
+  }
+  }
+
+  /*
+   Serial.println(fromUser);
+    if(Serial.available()){
+      btSerial.write(Serial.read());
+      btSerial.flush();
+    }
+  */
