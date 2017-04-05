@@ -200,16 +200,21 @@ void getMessageAndAct(){
 
   // 메시지에 따른 액션 
   if(!fromUser.equals("")){
-  if(fromUser.equals("red"))
-  {
-    setColor(255, 0, 0);  // red
+
+    // 앱으로부터 스트링 r.g.b 를 각각 int 수치로 얻는다. 
+    char * color = fromUser.c_str();
+    char * first = strtok(color, ".");
+    char * second = strtok(NULL, ".");
+    char * third = strtok(NULL, ".");
+
+    int r = atoi(first);
+    int g = atoi(second);
+    int b = atoi(third);
+
+    setColor(r,g,b);
+
     delay(2000);
-  }
-  if(fromUser.equals("blue"))
-  {   
-    setColor(0, 0, 255);  // blue
-    delay(2000);
-    }
+ 
     fromUser="";
   }
   }
