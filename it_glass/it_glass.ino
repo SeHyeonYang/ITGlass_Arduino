@@ -88,10 +88,10 @@ void setup() {
     Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
  
     // wait for ready
-    Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-    while (Serial.available() && Serial.read()); // empty buffer
-    while (!Serial.available());                 // wait for data
-    while (Serial.available() && Serial.read()); // empty buffer again
+    //Serial.println(F("\nSend any character to begin DMP programming and demo: "));
+    //while (Serial.available() && Serial.read()); // empty buffer
+    //while (!Serial.available());                 // wait for data
+    //while (Serial.available() && Serial.read()); // empty buffer again
  
     // load and configure the DMP
     Serial.println(F("Initializing DMP..."));
@@ -182,15 +182,25 @@ void loop() {
             checkZ[i] = ypr[2] * 180/M_PI;
             //기울기 : 루트 [Y값제곱 x Z값제곱]
             int Gradient = sqrt( abs(checkY[i] - checkY[abs(i-TEMP)])*abs(checkY[i] - checkY[abs(i-TEMP)])+abs(checkZ[i] - checkZ[abs(i-TEMP)])*abs(checkZ[i] - checkZ[abs(i-TEMP)]));
+            int absGradient = sqrt(ypr[1] * 180/M_PI*ypr[1] * 180/M_PI+ypr[2] * 180/M_PI*ypr[2] * 180/M_PI);
             
+            if(absGradient>30)
+           {  
+              setColor(0 , 0,255);
+              Serial.print("absGradient ");
+           }
+           else 
+               setColor(0, 0, 0);
            if(Gradient>28)
            {      
+                
                  Serial.print("Gradient ");
                  if(Serial.available()){
                       btSerial.write(Serial.read());
                       btSerial.flush();
                  }
            }
+          
 //            if(abs(checkY[i] - checkY[abs(i-30)])>28) 
 //                    Serial.print("GradientY ");
 //            if(abs(checkZ[i] - checkZ[abs(i-30)])>28) 
