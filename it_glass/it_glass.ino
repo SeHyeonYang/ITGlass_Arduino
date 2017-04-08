@@ -38,7 +38,7 @@ float checkY[100];
 float checkZ[100];
 #define TEMP 20
 int i=0;
- 
+int count =0 ;
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
  
@@ -75,7 +75,7 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
-    Serial.begin(115200);
+    Serial.begin(9600);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
  
  
@@ -154,15 +154,16 @@ void loop() {
  
     // get current FIFO count
     fifoCount = mpu.getFIFOCount();
- 
-    // check for overflow (this should never happen unless our code is too inefficient)
+
+//     check for overflow (this should never happen unless our code is too inefficient)
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
         mpu.resetFIFO();
-        Serial.println(F("FIFO overflow!"));
+     
  
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
-    } else if (mpuIntStatus & 0x02) {
+    } 
+    else if (mpuIntStatus & 0x02) {
         // wait for correct available data length, should be a VERY short wait
         while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
  
@@ -171,7 +172,8 @@ void loop() {
         
  
         fifoCount -= packetSize;
- 
+
+
  
         #ifdef OUTPUT_READABLE_YAWPITCHROLL
             // display Euler angles in degrees
@@ -184,34 +186,36 @@ void loop() {
             int Gradient = sqrt( abs(checkY[i] - checkY[abs(i-TEMP)])*abs(checkY[i] - checkY[abs(i-TEMP)])+abs(checkZ[i] - checkZ[abs(i-TEMP)])*abs(checkZ[i] - checkZ[abs(i-TEMP)]));
             int absGradient = sqrt(ypr[1] * 180/M_PI*ypr[1] * 180/M_PI+ypr[2] * 180/M_PI*ypr[2] * 180/M_PI);
             
-            if(absGradient>30)
-           {  
+            if(absGradient>30 && count ==0)
+           {   
+              count = 1;
               setColor(0 , 0,255);
-              Serial.print("absGradient ");
+              Serial.print("drink\n");
            }
-           else 
+           else if(absGradient<30 && count ==1)
+           {
+              
+               count = 0;
                setColor(0, 0, 0);
-           if(Gradient>28)
-           {      
-                
-                 Serial.print("Gradient ");
-                 if(Serial.available()){
-                      btSerial.write(Serial.read());
-                      btSerial.flush();
-                 }
+                Serial.print("drank\n");
            }
-          
-//            if(abs(checkY[i] - checkY[abs(i-30)])>28) 
-//                    Serial.print("GradientY ");
-//            if(abs(checkZ[i] - checkZ[abs(i-30)])>28) 
-//                    Serial.print("GradientZ ");
+//           if(Gradient>28)
+//           {      
+//                
+//                 Serial.print("Gradient ");
+//                 if(Serial.available()){
+//                      btSerial.write(Serial.read());
+//                      btSerial.flush();
+//                 }
+//           }
+//      
+//            Serial.print("\t");
+//            //Y값
+//            Serial.print(ypr[1] * 180/M_PI);
 //            
-            Serial.print("\t");
-            //Y값
-            Serial.print(ypr[1] * 180/M_PI);
-            Serial.print("\t");
-            //Z값
-            Serial.println(ypr[2] * 180/M_PI);
+//            Serial.print("\t");
+//            //Z값
+//            Serial.println(ypr[2] * 180/M_PI);
              
             i++;
             if(i==100)
