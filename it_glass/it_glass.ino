@@ -29,6 +29,7 @@ uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[64]; // FIFO storage buffer
  
 // orientation/motion vars
+
 Quaternion q;           // [w, x, y, z]         quaternion container
  
 VectorFloat gravity;    // [x, y, z]            gravity vector
@@ -191,6 +192,10 @@ void loop() {
               count = 1;
               setColor(0 , 0,255);
               Serial.print("drink\n");
+              if(XMT.available()){
+                btSerial.write(XMT.read());
+                btSerial.flush();
+              }
            }
            else if(absGradient<30 && count ==1)
            {
@@ -198,6 +203,10 @@ void loop() {
                count = 0;
                setColor(0, 0, 0);
                 Serial.print("drank\n");
+                if(XMT.available()){
+                     btSerial.write(XMT.read());
+                     btSerial.flush();
+                }
            }
 //           if(Gradient>28)
 //           {      
