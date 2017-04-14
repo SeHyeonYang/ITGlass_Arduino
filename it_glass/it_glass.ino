@@ -140,7 +140,7 @@ void setup() {
 // ================================================================
  
 void loop() {
- 
+ getMessageAndAct();
     if (!dmpReady) return;
  
     // wait for MPU interrupt or extra packet(s) available
@@ -197,7 +197,6 @@ void loop() {
            }
            else if(absGradient<30 && count ==1)
            {
-              
                count = 0;
                setColor(0, 0, 0);
                 Serial.print("drank\n");
@@ -271,7 +270,9 @@ void getMessageAndAct(){
  
     setColor(r,g,b);
  
-    delay(2000);
+    delay(5000);
+
+      setColor(0,0,0);
  
     fromUser="";
   }
