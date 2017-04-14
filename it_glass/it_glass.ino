@@ -142,7 +142,7 @@ void setup() {
 // ================================================================
  
 void loop() {
- 
+ getMessageAndAct();
     if (!dmpReady) return;
  
     // wait for MPU interrupt or extra packet(s) available
@@ -192,19 +192,18 @@ void loop() {
               count = 1;
               setColor(0 , 0,255);
               Serial.print("drink\n");
-              if(XMT.available()){
-                btSerial.write(XMT.read());
+              if(Serial.available()){
+                btSerial.write(Serial.read());
                 btSerial.flush();
               }
            }
            else if(absGradient<30 && count ==1)
            {
-              
                count = 0;
                setColor(0, 0, 0);
                 Serial.print("drank\n");
-                if(XMT.available()){
-                     btSerial.write(XMT.read());
+                if(Serial.available()){
+                     btSerial.write(Serial.read());
                      btSerial.flush();
                 }
            }
@@ -273,7 +272,9 @@ void getMessageAndAct(){
  
     setColor(r,g,b);
  
-    delay(2000);
+    delay(5000);
+
+      setColor(0,0,0);
  
     fromUser="";
   }
