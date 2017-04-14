@@ -134,9 +134,7 @@ void setup() {
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
 }
- 
- 
- 
+
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
@@ -192,8 +190,8 @@ void loop() {
               count = 1;
               setColor(0 , 0,255);
               Serial.print("drink\n");
-              if(XMT.available()){
-                btSerial.write(XMT.read());
+              if(Serial.available()){
+                btSerial.write(Serial.read());
                 btSerial.flush();
               }
            }
@@ -203,8 +201,8 @@ void loop() {
                count = 0;
                setColor(0, 0, 0);
                 Serial.print("drank\n");
-                if(XMT.available()){
-                     btSerial.write(XMT.read());
+                if(Serial.available()){
+                     btSerial.write(Serial.read());
                      btSerial.flush();
                 }
            }
