@@ -14,7 +14,13 @@ String fromUser=""; // message fromg user
 int redPin = 4;
 int greenPin = 3;
 int bluePin = 5;
- 
+// Hx711.DOUT - pin #A2
+// Hx711.SCK - pin #A3
+
+#include <Hx711.h>
+Hx711 scale(A2, A3);
+int horizon=0;
+
 MPU6050 mpu;
 #define OUTPUT_READABLE_YAWPITCHROLL
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
@@ -194,6 +200,7 @@ void loop() {
                 btSerial.write(Serial.read());
                 btSerial.flush();
               }
+              horizon=0;
            }
            else if(absGradient<30 && count ==1)
            {
@@ -204,6 +211,12 @@ void loop() {
                      btSerial.write(Serial.read());
                      btSerial.flush();
                 }
+                
+           }
+           if(absGradient<30){
+              horizon++;
+              if(horizon > 18)
+                Serial.print(scale.getGram(), 1);
            }
 //           if(Gradient>28)
 //           {      
