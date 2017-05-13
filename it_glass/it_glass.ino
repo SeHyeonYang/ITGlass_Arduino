@@ -18,12 +18,12 @@ int bluePin = 5;
 // Hx711.SCK - pin #A3
 
 #include <Hx711.h>
-Hx711 scale(A2, A3);
+Hx711 scale(A3, 6);
 int horizon=0;
 
 MPU6050 mpu;
 #define OUTPUT_READABLE_YAWPITCHROLL
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
+
 bool blinkState = false;
  
 // MPU control/status vars
@@ -33,16 +33,21 @@ uint8_t devStatus;      // return status after each device operation (0 = succes
 uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
 uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[64]; // FIFO storage buffer
+
+int absGradient;
+//int moveCheck;
+
  
 // orientation/motion vars
 
 Quaternion q;           // [w, x, y, z]         quaternion container
  
 VectorFloat gravity;    // [x, y, z]            gravity vector
-float euler[3];         // [psi, theta, phi]    Euler angle container
+
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-float checkY[100];
-float checkZ[100];
+float checkY;
+float checkX;
+float checkZ;
 #define TEMP 20
 int i=0;
 int count =0 ;
@@ -138,7 +143,7 @@ void setup() {
     }
  
     // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
+//    pinMode(LED_PIN, OUTPUT);
 }
 
 // ================================================================
@@ -185,11 +190,13 @@ void loop() {
             mpu.dmpGetQuaternion(&q, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            checkY[i] = ypr[1] * 180/M_PI;
-            checkZ[i] = ypr[2] * 180/M_PI;
-            //기울기 : 루트 [Y값제곱 x Z값제곱]
-            int Gradient = sqrt( abs(checkY[i] - checkY[abs(i-TEMP)])*abs(checkY[i] - checkY[abs(i-TEMP)])+abs(checkZ[i] - checkZ[abs(i-TEMP)])*abs(checkZ[i] - checkZ[abs(i-TEMP)]));
-            int absGradient = sqrt(ypr[1] * 180/M_PI*ypr[1] * 180/M_PI+ypr[2] * 180/M_PI*ypr[2] * 180/M_PI);
+            checkX= ypr[0] * 180/M_PI;
+            checkY = ypr[1] * 180/M_PI;
+            checkZ = ypr[2] * 180/M_PI;
+            //湲곗슱湲� : 猷⑦듃 [Y媛믪젣怨� x Z媛믪젣怨�]
+            //int Gradient = sqrt( abs(checkY[i] - checkY[abs(i-TEMP)])*abs(checkY[i] - checkY[abs(i-TEMP)])+abs(checkZ[i] - checkZ[abs(i-TEMP)])*abs(checkZ[i] - checkZ[abs(i-TEMP)]));
+            absGradient = sqrt(ypr[1]*180/M_PI * ypr[1] * 180/M_PI + ypr[2] * 180/M_PI*ypr[2] * 180/M_PI);
+           // moveCheck = sqrt(checkX*checkX + checkY * checkY + checkZ*checkZ);
             
             if(absGradient>30 && count ==0)
            {   
@@ -211,34 +218,29 @@ void loop() {
                      btSerial.write(Serial.read());
                      btSerial.flush();
                 }
-                
+                delay(200);
+                Serial.println(scale.getGram(), 1);
+                if(Serial.available()){
+                     btSerial.write(Serial.read());
+                     btSerial.flush();
+                }
            }
-           if(absGradient<30){
-              horizon++;
-              if(horizon > 18)
-                Serial.print(scale.getGram(), 1);
-           }
-//           if(Gradient>28)
-//           {      
+//           if(moveCheck<25){
+//              horizon++;
+//              if(horizon > 18)
+//                Serial.println(scale.getGram(), 1);
 //                
-//                 Serial.print("Gradient ");
-//                 if(Serial.available()){
-//                      btSerial.write(Serial.read());
-//                      btSerial.flush();
-//                 }
+//                if(Serial.available()){
+//                     btSerial.write(Serial.read());
+//                     btSerial.flush();
+//                }
 //           }
-//      
-//            Serial.print("\t");
-//            //Y값
-//            Serial.print(ypr[1] * 180/M_PI);
+//           else  if(moveCheck>20)
+//            horizon=0;
 //            
-//            Serial.print("\t");
-//            //Z값
-//            Serial.println(ypr[2] * 180/M_PI);
+
              
-            i++;
-            if(i==100)
-              i=0;
+        
            
         #endif
  
@@ -246,11 +248,11 @@ void loop() {
  
  
         // blink LED to indicate activity
-        blinkState = !blinkState;
-        digitalWrite(LED_PIN, blinkState);
+//        blinkState = !blinkState;
+//        digitalWrite(LED_PIN, blinkState);
     }
 }
-// RGB 값을 받아 analogWrite를 통해 각 핀에 연결된 LED에 전달
+// RGB 媛믪쓣 諛쏆븘 analogWrite瑜� �넻�빐 媛� ���뿉 �뿰寃곕맂 LED�뿉 �쟾�떖
 void setColor(int red, int green, int blue)
 {
   analogWrite(redPin, red);
@@ -260,7 +262,7 @@ void setColor(int red, int green, int blue)
  
 void getMessageAndAct(){
  
-  // 들어온 메시지가 있으면 받는다.
+  // �뱾�뼱�삩 硫붿떆吏�媛� �엳�쑝硫� 諛쏅뒗�떎.
   while(btSerial.available())
   {
     char myGetChar = (char)btSerial.read();
@@ -268,10 +270,10 @@ void getMessageAndAct(){
     delay(5);
   } 
  
-  // 메시지에 따른 액션 
+  // 硫붿떆吏��뿉 �뵲瑜� �븸�뀡 
   if(!fromUser.equals("")){
  
-    // 앱으로부터 스트링 r.g.b 를 각각 int 수치로 얻는다. 
+    // �빋�쑝濡쒕��꽣 �뒪�듃留� r.g.b 瑜� 媛곴컖 int �닔移섎줈 �뼸�뒗�떎. 
     char * color = fromUser.c_str();
     char * first = strtok(color, ".");
     char * second = strtok(NULL, ".");
@@ -290,3 +292,4 @@ void getMessageAndAct(){
     fromUser="";
   }
   }
+
