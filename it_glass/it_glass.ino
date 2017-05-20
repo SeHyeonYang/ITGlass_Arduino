@@ -20,7 +20,7 @@ int bluePin = 5;
 #include <Hx711.h>
 Hx711 scale(A3, 6);
 int horizon=0;
-
+int pour=0;
 MPU6050 mpu;
 #define OUTPUT_READABLE_YAWPITCHROLL
 
@@ -35,8 +35,8 @@ uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[64]; // FIFO storage buffer
 
 int absGradient;
-//int moveCheck;
-
+int moveCheck;
+int current;
  
 // orientation/motion vars
 
@@ -196,7 +196,7 @@ void loop() {
             //湲곗슱湲� : 猷⑦듃 [Y媛믪젣怨� x Z媛믪젣怨�]
             //int Gradient = sqrt( abs(checkY[i] - checkY[abs(i-TEMP)])*abs(checkY[i] - checkY[abs(i-TEMP)])+abs(checkZ[i] - checkZ[abs(i-TEMP)])*abs(checkZ[i] - checkZ[abs(i-TEMP)]));
             absGradient = sqrt(ypr[1]*180/M_PI * ypr[1] * 180/M_PI + ypr[2] * 180/M_PI*ypr[2] * 180/M_PI);
-           // moveCheck = sqrt(checkX*checkX + checkY * checkY + checkZ*checkZ);
+            moveCheck = sqrt(checkX*checkX + checkY * checkY + checkZ*checkZ);
             
             if(absGradient>30 && count ==0)
            {   
@@ -219,25 +219,28 @@ void loop() {
                      btSerial.flush();
                 }
                 delay(200);
+                current=scale.getGram();
+                Serial.println(current);
+                if(Serial.available()){
+                     btSerial.write(Serial.read());
+                     btSerial.flush();
+                }
+                
+           }
+           if(moveCheck<10){
+              pour=scale.getGram();
+              if(pour > current+5){
+                delay(300);
                 Serial.println(scale.getGram(), 1);
+              }
                 if(Serial.available()){
                      btSerial.write(Serial.read());
                      btSerial.flush();
                 }
            }
-//           if(moveCheck<25){
-//              horizon++;
-//              if(horizon > 18)
-//                Serial.println(scale.getGram(), 1);
-//                
-//                if(Serial.available()){
-//                     btSerial.write(Serial.read());
-//                     btSerial.flush();
-//                }
-//           }
-//           else  if(moveCheck>20)
-//            horizon=0;
-//            
+           else  if(moveCheck>20)
+            horizon=0;
+            
 
              
         
