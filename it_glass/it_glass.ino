@@ -20,7 +20,9 @@ int bluePin = 5;
 #include <Hx711.h>
 Hx711 scale(A3, 6);
 int horizon=0;
-int pour=0;
+float pour=0;
+float prePour=pour=0;
+float maxA=0;
 MPU6050 mpu;
 #define OUTPUT_READABLE_YAWPITCHROLL
 
@@ -36,7 +38,7 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 
 int absGradient;
 int moveCheck;
-int current;
+float current=0;
  
 // orientation/motion vars
 
@@ -46,11 +48,13 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 float checkY;
+float readyS;
 float checkX;
 float checkZ;
 #define TEMP 20
 int i=0;
 int count =0 ;
+int pourEnd=0;
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
  
@@ -198,6 +202,28 @@ void loop() {
             absGradient = sqrt(ypr[1]*180/M_PI * ypr[1] * 180/M_PI + ypr[2] * 180/M_PI*ypr[2] * 180/M_PI);
             moveCheck = sqrt(checkX*checkX + checkY * checkY + checkZ*checkZ);
             
+            if(count == 0){
+              if(maxA < 45){
+                pourEnd = 0;
+               while(pourEnd != 1){
+                    pour=scale.getGram();
+                    if(pour-prePour > 10 ){//양이 늘고있다
+                       //Serial.println("pouring");
+                        pourEnd = 2;
+                      }
+                      else if(pour-prePour < 10 && pourEnd==2){// 다따랐다
+                        maxA=pour;
+                        pourEnd = 1;
+                     }
+                   prePour=pour;
+                 }
+                 Serial.print("maxA is ");
+                 Serial.println(maxA);
+              }
+            }
+                
+
+            
             if(absGradient>30 && count ==0)
            {   
               count = 1;
@@ -218,29 +244,37 @@ void loop() {
                      btSerial.write(Serial.read());
                      btSerial.flush();
                 }
-                delay(200);
+                delay(500);
                 current=scale.getGram();
-                Serial.println(current);
-                if(Serial.available()){
-                     btSerial.write(Serial.read());
-                     btSerial.flush();
-                }
+             
+                  while(current > maxA){
+                    current=scale.getGram();
+                  }
+                
+                  Serial.println(maxA-current);
+                  if(Serial.available()){
+                      btSerial.write(Serial.read());
+                      btSerial.flush();
+                  }
+                  maxA = current;
                 
            }
-           if(moveCheck<10){
-              pour=scale.getGram();
-              if(pour > current+5){
-                delay(300);
-                Serial.println(scale.getGram(), 1);
-              }
-                if(Serial.available()){
-                     btSerial.write(Serial.read());
-                     btSerial.flush();
-                }
-           }
-           else  if(moveCheck>20)
-            horizon=0;
-            
+//            Serial.println(checkX);
+//            
+//           if(checkX-0.5<readyS&&readyS<checkX+0.5){
+//              pour=scale.getGram();
+//              if(pour > current+20){
+//                delay(300);
+//                Serial.println(scale.getGram(), 1);
+//              }
+//                if(Serial.available()){
+//                     btSerial.write(Serial.read());
+//                     btSerial.flush();
+//                }
+//           }
+//     //     else  if(moveCheck>20)
+//     //      horizon=0;
+//            readyS = checkX ;
 
              
         
