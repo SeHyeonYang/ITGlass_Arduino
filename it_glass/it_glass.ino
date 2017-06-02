@@ -207,18 +207,20 @@ void loop() {
                 pourEnd = 0;
                while(pourEnd != 1){
                     pour=scale.getGram();
-                    if(pour-prePour > 10 ){//양이 늘고있다
-                       //Serial.println("pouring");
-                        pourEnd = 2;
-                      }
-                      else if(pour-prePour < 10 && pourEnd==2){// 다따랐다
-                        maxA=pour;
-                        pourEnd = 1;
-                     }
-                   prePour=pour;
-                 }
-                 Serial.print("maxA is ");
-                 Serial.println(maxA);
+                    if(pour < 500){
+                      if(pour-prePour > 10 ){//양이 늘고있다
+                         //Serial.println("pouring");
+                         pourEnd = 2;
+                       }
+                        else if(pour-prePour < 10 && pourEnd==2){// 다따랐다
+                         maxA=pour;
+                          pourEnd = 1;
+                       }
+                     prePour=pour;
+                   }
+               }
+                 //Serial.print("maxA is ");
+                 //Serial.println(maxA);
               }
             }
                 
@@ -227,7 +229,7 @@ void loop() {
             if(absGradient>30 && count ==0)
            {   
               count = 1;
-              setColor(0 , 0,255);
+              getMessageAndAct();
               Serial.print("drink\n");
               if(Serial.available()){
                 btSerial.write(Serial.read());
@@ -238,7 +240,6 @@ void loop() {
            else if(absGradient<30 && count ==1)
            {
                count = 0;
-               setColor(0, 0, 0);
                 Serial.print("drank\n");
                 if(Serial.available()){
                      btSerial.write(Serial.read());
@@ -322,7 +323,7 @@ void getMessageAndAct(){
  
     setColor(r,g,b);
  
-    delay(5000);
+    delay(20s00);
 
       setColor(0,0,0);
  
